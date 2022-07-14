@@ -34,14 +34,14 @@
             <!--En el created hace un set de la empresa por default en empresa[0]-->
 
             <h1 class="navbar-brand  bg-primary text-uppercase text-light col-12 col-lg-12  rounded-3" href="#">
-                {{ selectedFactura.serie }} {{ selectedFactura.numero }} {{ selectedFactura.nombre }}</h1>
+                {{ selectedOrder.serie }} {{ selectedOrder.numero }} {{ selectedOrder.nombre }}</h1>
             <form class="pb-2">
                 <select class="form-select bg-light text-center w-100 text-uppercase" name="empresas" id="empresas"
-                    v-model="selectedFactura" v-on:change="setSelected(selectedFactura)">
-                    <!--Ponemos como value la id de cada factura-->
-                    <option v-for="factura in facturas" :key="factura.id" :value="factura">
+                    v-model="selectedOrder" v-on:change="setSelected(selectedOrder)">
+                    <!--Ponemos como value la id de cada pedido-->
+                    <option v-for="order in orders" :key="order.id" :value="order">
                         <!--SI la ID es 0 o 1 que se añada al option que esta selecionado-->
-                        {{factura.serie}} {{factura.numero}} {{factura.nomfiscli}}
+                        {{order.serie}} {{order.numero}} {{order.nomfiscli}}
                     </option>
                 </select>
             </form>
@@ -69,48 +69,48 @@
             <div class="container mb-3">{{ loadingValue }}</div>
         </div>
 
-        <!--**********************GRUPO NO ESTATICO DE GENERACION DE PRODUCTOS-->
-        <div id="products">
-            <ul v-for="articulo in articulos" :key="`$index`" class="list-group list-group-horizontal col-12">
+        <!--**********************GRUPO NO ESTATICO DE GENERACION DE OPS-->
+        <div id="ops">
+            <ul v-for="op in ops" :key="`$index`" class="list-group list-group-horizontal col-12">
 
-                <li class="list-group-item col-3" v-bind:class="{'green-color': comprobarVerde(articulo)}">
-                    {{ articulo.serie + '/' + articulo.numero }}
+                <li class="list-group-item col-3" v-bind:class="{'green-color': comprobarVerde(op)}">
+                    {{ op.serie + '/' + op.numero }}
                 </li>
-                <li class="list-group-item col-4" v-bind:class="{'green-color': comprobarVerde(articulo)}">{{
-                    articulo.denoart }}</li>
-                <li class="list-group-item col-2" v-bind:class="{'green-color': comprobarVerde(articulo)}">{{
-                    articulo.cantidad }}</li>
+                <li class="list-group-item col-4" v-bind:class="{'green-color': comprobarVerde(op)}">{{
+                    op.denoart }}</li>
+                <li class="list-group-item col-2" v-bind:class="{'green-color': comprobarVerde(op)}">{{
+                    op.cantidad }}</li>
 
                 <!--*******************FONDO-->
-                <li class="list-group-item col-1" v-bind:class="{'green-color': comprobarVerde(articulo)}">
-                    <div v-if="articulo.fondo === 'X'" class="form-check">
-                        <input class="form-check-input" v-on:change="beforePost(articulo,'fondo')" type="checkbox"
+                <li class="list-group-item col-1" v-bind:class="{'green-color': comprobarVerde(op)}">
+                    <div v-if="op.fondo === 'X'" class="form-check">
+                        <input class="form-check-input" v-on:change="beforePost(op,'fondo')" type="checkbox"
                             value="false">
                     </div>
-                    <div v-if="articulo.fondo === 'S'" class="form-check">
-                        <input class="form-check-input" v-on:change="beforePost(articulo,'fondo')" type="checkbox"
+                    <div v-if="op.fondo === 'S'" class="form-check">
+                        <input class="form-check-input" v-on:change="beforePost(op,'fondo')" type="checkbox"
                             value="true"  checked>
                     </div>
                 </li>
                 <!--******************LATERAL-->
-                <li class="list-group-item col-1" v-bind:class="{'green-color': comprobarVerde(articulo)}">
-                    <div v-if="articulo.lateral === 'X'" class="form-check">
-                        <input class="form-check-input" v-on:change="beforePost(articulo,'lateral')" type="checkbox"
+                <li class="list-group-item col-1" v-bind:class="{'green-color': comprobarVerde(op)}">
+                    <div v-if="op.lateral === 'X'" class="form-check">
+                        <input class="form-check-input" v-on:change="beforePost(op,'lateral')" type="checkbox"
                             value="false" >
                     </div>
-                    <div v-if="articulo.lateral === 'S'" class="form-check">
-                        <input class="form-check-input" v-on:change="beforePost(articulo,'lateral')" type="checkbox"
+                    <div v-if="op.lateral === 'S'" class="form-check">
+                        <input class="form-check-input" v-on:change="beforePost(op,'lateral')" type="checkbox"
                             value="true"  checked>
                     </div>
                 </li>
                 <!--*********************TAPA-->
-                <li class="list-group-item col-1" v-bind:class="{'green-color': comprobarVerde(articulo)}">
-                    <div v-if="articulo.tapa === 'X'" class="form-check">
-                        <input class="form-check-input" v-on:change="beforePost(articulo,'tapa')" type="checkbox"
+                <li class="list-group-item col-1" v-bind:class="{'green-color': comprobarVerde(op)}">
+                    <div v-if="op.tapa === 'X'" class="form-check">
+                        <input class="form-check-input" v-on:change="beforePost(op,'tapa')" type="checkbox"
                             value="false" >
                     </div>
-                    <div v-if="articulo.tapa === 'S'" class="form-check">
-                        <input class="form-check-input" v-on:change="beforePost(articulo,'tapa')" type="checkbox"
+                    <div v-if="op.tapa === 'S'" class="form-check">
+                        <input class="form-check-input" v-on:change="beforePost(op,'tapa')" type="checkbox"
                             value="true"  checked>
                     </div>
                 </li>
@@ -121,12 +121,10 @@
 
 
     <footer class="footer text-center softgrey p-2" >
-        
             <button type="button" class="btn btn-primary  w-50 h-100" data-bs-toggle="modal" data-bs-target="#exampleModal"
                 :disabled="isDisabled" >
                 {{ buttonValue }}
             </button>
-        
     </footer>
 
 
@@ -145,7 +143,7 @@
                         Cerrar
                     </button>
                     <button type="button" class="btn btn-primary col-6 mx-0 border border-light"
-                        v-on:click="showProduction();" data-bs-dismiss="modal" :disabled="isDisabled">{{ buttonValue }}
+                        v-on:click="postOPion()" data-bs-dismiss="modal" :disabled="isDisabled">{{ buttonValue }}
                     </button>
                 </div>
             </div>

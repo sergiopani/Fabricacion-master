@@ -1,18 +1,19 @@
-//const { getProduct } = require("../../../controllers/product");
+//require('dotenv').config()
+//const node =  require('node')
+//import axios from 'axios';
 
-//import axios from "axios";
-
+const ENDPOINT_URL = "http://192.168.235.81:8080";
 new Vue({
     el: "#app",
     data: {
-        //Array de articulos que parseamos desde el fichero json
-        //articulos: [],
+        //Array de ops que parseamos desde el fichero json
+        //ops: [],
         toProduce: [],
         //Array del fetch de json de empresas
-        facturas: [],
+        orders: [],
 
         //Objeto que guarda la empresa que esta selecionada en el select
-        selectedFactura: {
+        selectedOrder: {
             id: '',
             nomfiscli: '',
             serie: '',
@@ -20,9 +21,9 @@ new Vue({
             centro: '',
             numero: '',
         },
-        articulos: [],
+        ops: [],
 
-        selectedArticulo: {
+        selectedOP: {
             centro: "",
             tipo: 0,
             serie: "",
@@ -34,206 +35,182 @@ new Vue({
             lateral: "",
             tapa: ""
         },
-        articuloEnviar: {
+        opEnviar: {
             centro: "",
             tipo: 0,
             serie: "",
             numero: 0,
-
             tipoEnviar: "",
             valor: false
         },
         //Loading atributes
         loadingValue: "Cargando.....",
+        
         //Button atributes
         buttonValue: "No se puede enviar a producción",
         isDisabled: true,
-
-
-
     },
     /*Metodos que se ejecutan al iniciar la pagina*/
     created() {
-        const getfacturasExecution = new Promise((resolve, reject) => {
-            resolve(this.getFacturas());
+        
+        const getOrdersExecution = new Promise((resolve, reject) => {
+            resolve(this.getOrders());
         });
-        getfacturasExecution
+        getOrdersExecution
             .then(value => {
-                this.setDefault(this.facturas[0])
+                if (this.orders.length == 0) {
+                 
+                    document.getElementById("ops").style.display = "block";
+                    document.getElementById("ops").innerHTML = '<h4 class="text-center"> No hay pedidos </h4>';
+                    document.getElementById("reload").style.display = "none";
+                }
+                this.setDefault(this.orders[0])
             })
             .catch(err => {
-                console.log("NO SE PUEDEN OBTENER LAS FACTURAS! " + err)
+                console.log("NO SE PUEDEN OBTENER LOS PEDIDOS! " + err);
             })
-
-
     },
     methods: {
-        comprobarVerde: function (articulo) {
+        comprobarVerde: function (op) {
 
             //enviar objecto de post
-            if (articulo.fondo === 'S' && articulo.lateral === 'S' && articulo.tapa === 'S') {
+            if (op.fondo === 'S' && op.lateral === 'S' && op.tapa === 'S') {
                 return true;
-            }else if (articulo.fondo === 'S' && articulo.lateral === 'S' && articulo.tapa === 'N'){
+            }else if (op.fondo === 'S' && op.lateral === 'S' && op.tapa === 'N'){
                 return true;
             }
-            /*
-            if(this.enableProductionByDefault()){
-                this.isDisabled = false;
-                this.buttonValue = "Enviar a producción"
-
-            }else{
-                this.isDisabled = true;
-                this.buttonValue = "No se puede enviar a produccion"
-
-            }
-            */
-
-            /*else {
-                this.deleteProduct(articulo);
-            }*/
-
+        
         },
-        sendProduction: function (articulo) {
+        sendOP: function (op) {
             //Comprueba que elementos li estan marcados en verde
-            this.toProduce.push(articulo)
+            this.toProduce.push(op)
 
         },
-        deleteProduct: function (articulo) {
+        deleteOP: function (op) {
             for (let i = 0; i < this.toProduce.length; i++) {
-                if (this.toProduce[i] === articulo) {
+                if (this.toProduce[i] === op) {
                     this.toProduce[i] = null;
                 }
             }
             this.deleteNullsFromArray();
-
-        },
+       },
         deleteNullsFromArray: function () {
             //Eliminar las posiciones que son nulas
             this.toProduce = this.toProduce.filter(element => {
                 return element !== null;
             });
         },
-        showProduction: function () {
-
-            //Eliminar las posiciones que son nulas
-            /*
-            const results = this.toProduce.filter(element => {
-                return element !== null;
-            });
-            */
-            this.postProduction(this.toProduce);
-
-        },
-        postProduction: async function (toProduceArray) {
+        /**
+         *
+         * @returns {Promise<void>}
+         */
+        postOPion: async function () {
+            let toProduceArray = this.toProduce;
             //Cambiamos el valor del boton y lo bloqueamos
+            console.log("ESTAAA" + toProduceArray)
             this.buttonValue = 'Enviando.....';
             this.loadingValue = 'Enviando.....'
             this.isDisabled = true;
-            document.getElementById("products").style.display = "none";
+            document.getElementById("ops").style.display = "none";
             document.getElementById("reload").style.display = "block";
             //Envia a PEP todas los objectos que van a producion
-            const url = "http://192.168.235.81:8080/kriterOMNI/KriterRS004/closeOP";
+            //const url = "http://localhost:8080/kriterOMNI/KriterRS004/closeOP";
             try {
-                await axios.post(url, toProduceArray)
+                await axios.post(ENDPOINT_URL+"/kriterOMNI/KriterRS004/closeOP", toProduceArray)
                     .then(response => {
-                        console.log("El response es igual a " + response.status);
-                        console.log(toProduceArray);
-                        if (response.status == 200) {
-                            console.log("Respuesta satisfactoria");
+
+
+                        //this.getOrders();
+                        console.log("EL length es " + this.orders.length)
+                        //this.setDefault(this.orders[0])
+                        if (response.status === 200) {
+                            this.getOps();
+                            //Si la array actual es del mismo length que la nueva la seteamos a 0
                             this.buttonValue = "Enviar a producción";
                             this.isDisabled = false;
-                            document.getElementById("products").style.display = "block";
+                            document.getElementById("ops").style.display = "block";
                             document.getElementById("reload").style.display = "none";
                         }
-
+                        if(this.toProduce.length === this.ops.length){
+                            if(this.orders[1]) {
+                                this.setSelected(this.orders[1]);
+                            }else{
+                                this.setSelected(this.orders[0]);
+                            }
+                        }
+                        console.log("la largada es : " + this.ops.length)
+                        console.log(this.ops)
+                        if(response.status === 200 && this.ops.length === 0 || response.status === 200 && this.ops.length === 1){
+                            this.getOrders();
+                        }
 
                         //this.displayReload(data.status);
                     })
                 this.buttonValue = "No se puede enviar a producción";
                 this.isDisabled = true;
-
-            } catch (error) {
-                console.log("El error que devulve es: " + error.data);
+            }
+            catch (error) {
+                console.log("El error que devuelve es: " + error.data);
             }
 
-            /*if(res.status = 200){
-                document.querySelector('#buttonProduction').value = 'Enviar';
-            }*/
-
-            this.refreshProducts();
-            //this.refreshFacturas();
+            this.refreshOps();
+            //this.refreshOrders();
             this.loadingValue = "Cargando....."
 
         },
-        refreshProducts: function () {
+        refreshOps: function () {
             this.toProduce = [];
-            this.articulos = [];
-            this.getProducts();
+            this.ops = [];
+            this.getOps();
         },
-        refreshFacturas: function () {
-            console.log(this.articulos);
-            /*if(this.articulos.length == 0){
-                //Ya no quedan mas articulos en esa factura por lo tanto actualizamos las facturas y ponemos el set selected a el primero del array
-                this.facturas = [];
-                this.getFacturas();
-                //setSelected(this.facturas[0]);
+        refreshOrders: function () {
+            console.log(this.ops);
+            /*if(this.ops.length == 0){
+                //Ya no quedan mas ops en ese ped por lo tanto actualizamos las orders y ponemos el set selected a el primero del array
+                this.orders = [];
+                this.getOrders();
+                //setSelected(this.orders[0]);
 
             }*/
-            //this.setSelected(this.facturas[0]);
-
-            this.facturas = [];
-            this.getFacturas();
-            this.setDefault(this.facturas[0]);
-
-
-
+            //this.setSelected(this.orders[0]);
+            this.orders = [];
+            this.getOrders();
+            this.setDefault(this.orders[0]);
         },
         filter: function (a) {
-
             let ideProducto = a.centro + a.tipo + a.serie + a.numero;
-
-            return ideProducto.toUpperCase() === this.selectedFactura.id.toUpperCase();
+            return ideProducto.toUpperCase() === this.selectedOrder.id.toUpperCase();
         },
-        setSelected: function (facturaObject) {
-            //console.log("cambiando  ->" + facturaId)
+        setSelected: function (orderObject) {
+            //console.log("cambiando  ->" + )
             //Sacamos una array separando por '/' en cada uno de las posiciones
-            //let atributos = this.currentFactura.id.split('/');
+            //let atributos = this.currentOrder.id.split('/');
             //console.log(atributos);
             //Recorrer la array
-            this.setDefault(facturaObject);
+            this.setDefault(orderObject);
         },
-        setDefault: function (factura) {
-            /*this.selectedFactura.id = factura.serie + factura.tipo + factura.centro + factura.numero;
-            this.selectedFactura.nombre = factura.nomfiscli;
-            this.selectedFactura.serie = factura.serie;
-            this.selectedFactura.tipo = factura.tipo;
-            this.selectedFactura.centro = factura.centro;
-            this.selectedFactura.numero = factura.numero;*/
-
-            this.selectedFactura = factura;
-
-            this.selectedFactura.id = this.selectedFactura.centro + this.selectedFactura.tipo + this.selectedFactura.serie +
-                this.selectedFactura.numero;
-
-            this.getProducts();
-
-            const getfacturasExecution =
+        setDefault: function (order) {
+            this.selectedOrder = order;
+            this.selectedOrder.id = this.selectedOrder.centro + this.selectedOrder.tipo + this.selectedOrder.serie +
+                this.selectedOrder.numero;
+            this.getOps();
+            const getOrdersExecution =
                 new Promise((resolve, reject) => {
-                    resolve(this.getProducts());
+                    resolve(this.getOps());
                 });
-            getfacturasExecution.then((value) => {
-                this.toProductionDefault();
+            getOrdersExecution.then((value) => {
+                this.toOPDefault();
             });
 
 
         },
-        toProductionDefault: function () {
-            console.log(this.articulos);
-            if (this.articulos.length >= 1) {
-                this.articulos.forEach(articulo => {
-                    console.log(articulo)
-                    if (this.comprobarVerde(articulo) === true) {
-                        this.toProduce.push(articulo);
+        toOPDefault: function () {
+            console.log(this.ops);
+            if (this.ops.length >= 1) {
+                this.ops.forEach(op => {
+                    console.log(op)
+                    if (this.comprobarVerde(op) === true) {
+                        this.toProduce.push(op);
                         this.isDisabled = false;
                         this.buttonValue = "Enviar a produccion";
                     }
@@ -242,65 +219,58 @@ new Vue({
 
         },
 
-        beforePost: function (articulo, tipo) {
-            //Vamos a poner en el selected articulo actual los valores de de cada uno de los tipos...
+        beforePost: function (op, tipo) {
+            //Vamos a poner en el selected op actual los valores de de cada uno de los tipos...
 
-            this.selectedArticulo = articulo;
+            this.selectedOP = op;
             if (tipo === 'fondo') {
                 if (event.target.checked === true) {
-                    this.selectedArticulo.fondo = 'S';
+                    this.selectedOP.fondo = 'S';
                 } else {
-                    this.selectedArticulo.fondo = 'X';
+                    this.selectedOP.fondo = 'X';
                 }
             }
             if (tipo === 'lateral') {
                 if (event.target.checked === true) {
-                    this.selectedArticulo.lateral = 'S';
+                    this.selectedOP.lateral = 'S';
                 } else {
-                    this.selectedArticulo.lateral = 'X';
+                    this.selectedOP.lateral = 'X';
                 }
             }
             if (tipo === 'tapa') {
                 if (event.target.checked === true) {
-                    this.selectedArticulo.tapa = 'S';
+                    this.selectedOP.tapa = 'S';
                 } else {
-                    this.selectedArticulo.tapa = 'X';
+                    this.selectedOP.tapa = 'X';
                 }
             }
 
-            this.enableProduction();
-            // if(this.enableProduction(this.articulos) === true){
-            //     this.isDisabled = false;
-            //     this.buttonValue = "Enviar a produccion";
-            // }else{
-            //     this.isDisabled = true;
-            //     this.buttonValue = "No se puede enviar a produccion";
-            // }
-            console.log("*************" + this.selectedArticulo);
-            //this.comprobarVerde(this.selectedArticulo);
-            if (this.comprobarVerde(this.selectedArticulo) === true) {
-                this.sendProduction(this.selectedArticulo);
+            this.enableOP();
+            
+            console.log("*************" + this.selectedOP);
+            //this.comprobarVerde(this.selectedOP);
+            if (this.comprobarVerde(this.selectedOP) === true) {
+                this.sendOP(this.selectedOP);
             } else {
-                this.deleteProduct(this.selectedArticulo);
-
+                this.deleteOP(this.selectedOP);
             }
             console.log(event.target.checked);
-            this.articuloEnviar.centro = articulo.centro;
-            this.articuloEnviar.serie = articulo.serie;
-            this.articuloEnviar.tipo = articulo.tipo;
-            this.articuloEnviar.numero = articulo.numero;
-            this.articuloEnviar.tipoEnviar = tipo;
-            this.articuloEnviar.valor = event.target.checked;
-            //console.log(this.articuloEnviar);
+            this.opEnviar.centro = op.centro;
+            this.opEnviar.serie = op.serie;
+            this.opEnviar.tipo = op.tipo;
+            this.opEnviar.numero = op.numero;
+            this.opEnviar.tipoEnviar = tipo;
+            this.opEnviar.valor = event.target.checked;
+            //console.log(this.opEnviar);
 
-            this.postProduct();
+            this.postOP();
         },
-        postProduct: async function () {
+        postOP: async function () {
             //Hay que pasar el estado en que se encuentra el check
 
-            const url = "http://192.168.235.81:8080/kriterOMNI/KriterRS004/marcarFase";
+            //const url = "http://localhost:8080/kriterOMNI/KriterRS004/marcarFase";
             try {
-                await axios.post(url, this.articuloEnviar)
+                await axios.post(ENDPOINT_URL + "/kriterOMNI/KriterRS004/marcarFase", this.opEnviar)
                     .then(data => {
                         console.log(data);
                     })
@@ -313,15 +283,15 @@ new Vue({
 
         },
         checkEnable: function (){
-            for(let i = 0; i<this.articulos.length; i++){
-                if(this.comprobarVerde(this.articulos[i])){
+            for(let i = 0; i<this.ops.length; i++){
+                if(this.comprobarVerde(this.ops[i])){
                     return true;
                 }
             }
             return false;
         },
 
-        enableProduction: function () {
+        enableOP: function () {
             if(this.checkEnable()){
                 this.buttonValue = "Enviar a producción"
             }else{
@@ -333,85 +303,69 @@ new Vue({
         displayReload: async function (status) {
             if (status == 200) {
 
-                document.getElementById("products").style.display = "block";
+                document.getElementById("ops").style.display = "block";
                 document.getElementById("reload").style.display = "none";
             } else {
 
-                document.getElementById("products").style.display = "none";
+                document.getElementById("ops").style.display = "none";
                 document.getElementById("reload").style.display = "block";
             }
         },
-        //closeOP
-        getProducts: async function () {
+        
+        getOps: async function () {
 
             try {
-                const url = "http://192.168.235.81:8080/kriterOMNI/KriterRS004/getOP?centro=" + this.selectedFactura.centro + "&tipo=" + this.selectedFactura.tipo
-                    + "&serie=" + this.selectedFactura.serie + "&numero=" + this.selectedFactura.numero;
+                //const url = "http://localhost:8080/kriterOMNI/KriterRS004/getOP?centro=" + this.selectedOrder.centro + "&tipo=" + this.selectedOrder.tipo
+                //    + "&serie=" + this.selectedOrder.serie + "&numero=" + this.selectedOrder.numero;
 
                 //const url = '../data/products.json';
 
-                const response = await axios(url);
+                const response = await axios(ENDPOINT_URL + "/kriterOMNI/KriterRS004/getOP?centro=" + this.selectedOrder.centro + "&tipo=" + this.selectedOrder.tipo
+                + "&serie=" + this.selectedOrder.serie + "&numero=" + this.selectedOrder.numero);
                 const res = response.data;
 
-                this.articulos = [];
-                this.articulos = res;
+                //this.ops = [];
+                
+                this.toProduce = [];
+                //TODO
+                this.ops = res;
+
                 //Si la respeusta es 200 ponemos display none a la rueda y display true a los productos
 
                 if (response.status === 200) {
-                    document.getElementById("products").style.display = "block";
+                    document.getElementById("ops").style.display = "block";
                     document.getElementById("reload").style.display = "none";
                 } else {
-                    document.getElementById("products").style.display = "none";
+                    document.getElementById("ops").style.display = "none";
                     document.getElementById("reload").style.display = "block";
                 }
-
-
 
             } catch (err) {
                 console.log(err);
             }
         },
 
-        /*
-            getProducts:async function() {
-                fetch("../data/products.json")
-                    .then((res) => res.json())
-                    .then((data) => ((this.selectedFactura.articulos = data)
-                        ))
-                    .catch((err) => console.log(err.message));
-            },
-        */
-
-
-
-        getFacturas: async function () {
+        getOrders: async function () {
 
 
             try {
-                const url = "http://192.168.235.81:8080/kriterOMNI/KriterRS004/getOrders";
+                //const url = "http://localhost:8080/kriterOMNI/KriterRS004/getOrders";
                 //const url = "http://localhost:8080/kriterOMNI/KriterRS004/getOrders";
 
-                //const url = '../data/facturas.json'
-                const response = await axios(url);
+                //const url = '../data/orders.json'
+                const response = await axios(ENDPOINT_URL + "/kriterOMNI/KriterRS004/getOrders");
 
                 const res = response.data;
-                this.facturas = res;
+                this.orders = [];
+
+                this.orders = res;
 
 
             } catch (err) {
-                console.log("NO SE PUEDEN OBTENER LAS FACTURAS!" + err);
+                console.log("NO SE PUEDEN OBTENER LOS PEDIDOS!" + err);
             }
         }
 
-
-        /*
-                getFacturas:async function() {
-                    fetch("https://40ac-45-15-136-50.eu.ngrok.io/kriterOMNI/KriterRS004/getOrders")
-                        .then((res) => res.json())
-                        .then((data) => ((this.facturas = data), console.log(this.facturas)))
-                        .catch((err) => console.log(err.message));
-                },
-        */
 
     },
 });
